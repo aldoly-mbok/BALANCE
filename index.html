@@ -1,75 +1,218 @@
 <!DOCTYPE html>
-<html dir="rtl">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>لوحة تحكم السيرفر</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة تحكم بنكك | الإدارة المركزية</title>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+    
     <style>
-        body { font-family: sans-serif; text-align: center; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 10px; display: inline-block; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input { display: block; width: 280px; margin: 10px auto; padding: 12px; border: 1px solid #ddd; border-radius: 5px; font-size: 16px; }
-        button { background: #007bff; color: white; border: none; padding: 12px 20px; border-radius: 5px; cursor: pointer; width: 100%; font-size: 16px; font-weight: bold; }
-        button:hover { background: #0056b3; }
-        #status { margin-top: 15px; font-weight: bold; }
+        :root {
+            --primary-color: #2d5d4b; /* لون بنكك الأخضر */
+            --accent-color: #e67e22;
+            --bg-color: #f0f2f5;
+            --white: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .admin-card {
+            width: 100%;
+            max-width: 500px;
+            background: var(--white);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            overflow: hidden;
+            border-top: 8px solid var(--primary-color);
+        }
+
+        .header {
+            background: var(--primary-color);
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h2 { margin: 0; font-size: 22px; }
+
+        .content { padding: 25px; }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            outline: none;
+            transition: 0.3s;
+            font-size: 14px;
+        }
+
+        input:focus { border-color: var(--primary-color); box-shadow: 0 0 5px rgba(45,93,75,0.2); }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-search { background: var(--primary-color); color: white; padding: 0 20px; }
+        .btn-search:hover { background: #1e3f33; }
+
+        .user-details {
+            display: none; /* مخفي حتى يتم البحث */
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; font-size: 13px; }
+
+        .balance-group {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .balance-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .btn-action { flex: 1; padding: 10px; color: white; font-size: 12px; }
+        .btn-plus { background: #27ae60; }
+        .btn-minus { background: #c0392b; }
+
+        .btn-save {
+            width: 100%;
+            padding: 15px;
+            background: var(--accent-color);
+            color: white;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        .btn-save:hover { background: #d35400; }
+
+        .status { text-align: center; font-size: 12px; margin-top: 10px; color: #777; }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h3>تحديث رصيد بنكك (السيرفر)</h3>
-        
-        <label>رقم الحساب (account_number):</label>
-        <input type="text" id="accNum" placeholder="مثال: 4967225" value="4967225">
-        
-        <label>المبلغ الجديد (balance):</label>
-        <input type="number" id="newBal" placeholder="أدخل المبلغ هنا">
-        
-        <button onclick="sendUpdate()">تحديث السيرفر الآن</button>
-        
-        <div id="status"></div>
+<div class="admin-card">
+    <div class="header">
+        <h2>لوحة إدارة المستخدمين</h2>
     </div>
 
-    <script>
-        // إعدادات Firebase من ملف strings.xml الخاص بك
-        const firebaseConfig = {
-            apiKey: "AIzaSyBR1lzuYqNUg1yRRdiNau4o6rjzpX8GjRo",
-            databaseURL: "https://ontest-92fe9-default-rtdb.firebaseio.com",
-            projectId: "ontest-92fe9"
-        };
+    <div class="content">
+        <label>رقم حساب المستخدم (ID في فايربيس):</label>
+        <div class="search-box">
+            <input type="text" id="accId" placeholder="مثلاً: 1234567">
+            <button class="btn-search" onclick="fetchUser()">بحث</button>
+        </div>
 
-        // تهيئة Firebase
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
+        <div id="userDetails" class="user-details">
+            <label>الاسم الكامل (يظهر في التطبيق):</label>
+            <input type="text" id="userName">
 
-        function sendUpdate() {
-            const account = document.getElementById('accNum').value;
-            const balance = document.getElementById('newBal').value;
-            const statusDiv = document.getElementById('status');
+            <div class="balance-group">
+                <label>الرصيد الحالي (SDG):</label>
+                <input type="number" id="userBalance" step="0.01">
+                <div class="balance-actions">
+                    <button class="btn-action btn-plus" onclick="mathBalance(true)">+ إضافة مبلغ</button>
+                    <button class="btn-action btn-minus" onclick="mathBalance(false)">- خصم مبلغ</button>
+                </div>
+            </div>
 
-            if (!account || !balance) {
-                statusDiv.innerText = "⚠️ يرجى إدخال رقم الحساب والمبلغ";
-                statusDiv.style.color = "orange";
-                return;
+            <label>كلمة المرور:</label>
+            <input type="text" id="userPass">
+
+            <button class="btn-save" onclick="updateToFirebase()">تحديث البيانات الآن</button>
+            <p class="status">التعديلات تنعكس فوراً على تطبيق المستخدم</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // إعدادات مشروعك التي أرسلتها
+    const firebaseConfig = {
+        apiKey: "AIzaSyCWDfYZSHHu6E-XRzZ1THpeMdSfxECRAl0",
+        databaseURL: "https://sajobok-default-rtdb.firebaseio.com/",
+        projectId: "sajobok",
+        storageBucket: "sajobok.firebasestorage.app"
+    };
+
+    // تهيئة فايربيس
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // دالة البحث عن المستخدم
+    function fetchUser() {
+        const id = document.getElementById('accId').value;
+        if (!id) return alert("يرجى إدخال رقم الحساب");
+
+        database.ref('users/' + id).once('value').then((snapshot) => {
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                document.getElementById('userDetails').style.display = 'block';
+                document.getElementById('userName').value = data.full_name || "";
+                document.getElementById('userBalance').value = data.balance || 0;
+                document.getElementById('userPass').value = data.password || "";
+            } else {
+                alert("عذراً، المستخدم غير موجود. تأكد من إنشاء العقدة في فايربيس أولاً.");
+                document.getElementById('userDetails').style.display = 'none';
             }
+        });
+    }
 
-            statusDiv.innerText = "⏳ جاري الاتصال بالسيرفر...";
-            statusDiv.style.color = "blue";
-
-            // التحديث في مسار user_session/account_number
-            database.ref('user_session/' + account).update({
-                balance: parseFloat(balance)
-            })
-            .then(() => {
-                statusDiv.innerText = "✅ تم تحديث الرصيد للحساب " + account + " بنجاح!";
-                statusDiv.style.color = "green";
-            })
-            .catch((error) => {
-                statusDiv.innerText = "❌ فشل التحديث: " + error.message;
-                statusDiv.style.color = "red";
-                console.error(error);
-            });
+    // دالة العمليات الحسابية السريعة للرصيد
+    function mathBalance(isAdd) {
+        const input = document.getElementById('userBalance');
+        const amount = prompt(isAdd ? "أدخل المبلغ المراد إضافته:" : "أدخل المبلغ المراد خصمه:");
+        if (amount && !isNaN(amount)) {
+            const current = parseFloat(input.value);
+            const change = parseFloat(amount);
+            input.value = isAdd ? (current + change).toFixed(2) : (current - change).toFixed(2);
         }
-    </script>
+    }
+
+    // دالة الإرسال لفايربيس
+    function updateToFirebase() {
+        const id = document.getElementById('accId').value;
+        const name = document.getElementById('userName').value;
+        const balance = parseFloat(document.getElementById('userBalance').value);
+        const pass = document.getElementById('userPass').value;
+
+        database.ref('users/' + id).update({
+            full_name: name,
+            balance: balance,
+            password: pass
+        }).then(() => {
+            alert("تم التحديث بنجاح! المستخدم " + name + " استلم البيانات الآن.");
+        }).catch((error) => {
+            alert("خطأ في التحديث: " + error.message);
+        });
+    }
+</script>
+
 </body>
 </html>
