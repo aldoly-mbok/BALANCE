@@ -3,169 +3,193 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SAJOBOK | نظام عباس الدولي</title>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    
+    <title>SajoBok Admin - لوحة التحكم</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
     <style>
         :root {
-            --primary-red: #d32f2f;
+            --primary-red: #cc0000; /* أحمر بنكك الشهير */
+            --dark-red: #990000;
             --white: #ffffff;
-            --light-gray: #f9f9f9;
-            --text-color: #333;
-            --shadow: 0 10px 30px rgba(211, 47, 47, 0.12);
+            --light-gray: #f4f4f4;
+            --shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
 
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--light-gray);
-            margin: 0; padding: 20px;
-            display: flex; flex-direction: column; align-items: center;
+        * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
+        body { background-color: var(--light-gray); margin: 0; padding: 0; color: #333; }
+
+        header {
+            background-color: var(--primary-red);
+            padding: 20px 5%;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
         }
 
-        .page-title { font-size: 35px; font-weight: 900; color: var(--primary-red); margin-top: 10px; letter-spacing: 1px; }
-        .page-subtitle { font-size: 13px; color: #888; margin-bottom: 25px; }
+        .logo { font-size: 24px; font-weight: 900; letter-spacing: 1px; }
+        .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
 
-        .admin-card {
-            width: 100%; max-width: 480px;
-            background: var(--white); border-radius: 25px;
-            box-shadow: var(--shadow); margin-bottom: 25px;
-            overflow: hidden; border: 1px solid rgba(211, 47, 47, 0.05);
+        /* الكروت */
+        .card {
+            background: white;
+            border-radius: 25px;
+            padding: 30px;
+            box-shadow: var(--shadow);
+            border-bottom: 5px solid var(--primary-red);
+            transition: transform 0.3s;
         }
+        .card:hover { transform: translateY(-5px); }
 
-        .header { background: var(--primary-red); color: white; padding: 20px; text-align: center; }
-        .header h2 { margin: 0; font-size: 18px; }
+        h2 { color: var(--primary-red); font-size: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
 
-        .content { padding: 30px; }
-
-        .input-wrapper { position: relative; margin-bottom: 18px; }
-        .input-icon { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: #bbb; }
-
-        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; font-size: 13px; }
-
+        /* مدخلات البيانات */
+        .input-group { margin-bottom: 15px; position: relative; }
+        .input-group i { position: absolute; right: 15px; top: 15px; color: #888; }
         input {
-            width: 100%; padding: 15px 45px 15px 15px;
-            border: 2px solid #eee; border-radius: 15px;
-            outline: none; box-sizing: border-box;
-            background-color: #fff; font-size: 14px; transition: 0.3s;
+            width: 100%;
+            padding: 12px 45px 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 15px;
+            font-size: 15px;
+            outline: none;
+            background: #fafafa;
         }
+        input:focus { border-color: var(--primary-red); background: #fff; }
 
-        input[readonly] { background-color: #f1f1f1; color: #999; cursor: not-allowed; }
-
-        button { cursor: pointer; border: none; border-radius: 15px; font-weight: bold; transition: 0.3s; padding: 15px; width: 100%; }
+        /* الأزرار */
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 15px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.3s;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn-red { background-color: var(--primary-red); color: white; }
+        .btn-red:hover { background-color: var(--dark-red); box-shadow: 0 5px 15px rgba(204,0,0,0.3); }
+        .btn-outline { background: transparent; border: 2px solid var(--primary-red); color: var(--primary-red); margin-bottom: 15px; }
         
-        .btn-search { background: var(--white); color: var(--primary-red); border: 2px solid var(--primary-red); margin-bottom: 15px; }
-        .btn-update { background: #ff9800; color: white; margin-top: 20px; }
-        .btn-add-new { background: var(--primary-red); color: white; margin-top: 20px; }
-        .btn-generate { background: #444; color: white; margin-bottom: 15px; font-size: 12px; padding: 10px; }
+        .math-box { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-mini { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid #ccc; background: #eee; font-weight: bold; cursor: pointer; }
 
-        /* نافذة النجاح المنبثقة */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center;
+        /* المودال */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            align-items: center; justify-content: center; z-index: 1000;
         }
-
         .modal-content {
-            background: white; padding: 30px; border-radius: 25px; width: 90%; max-width: 400px;
-            text-align: center; position: relative; animation: zoomIn 0.3s ease;
+            background: white; padding: 30px; border-radius: 30px;
+            text-align: center; width: 90%; max-width: 400px;
+            animation: fadeIn 0.3s;
         }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .copy-area { background: #fff5f5; padding: 20px; border: 2px dashed var(--primary-red); border-radius: 20px; margin: 20px 0; font-size: 18px; font-weight: 900; color: var(--dark-red); }
 
-        @keyframes zoomIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
-        .modal-content h3 { color: #2e7d32; margin-top: 0; }
-        
-        .full-copy-box {
-            background: #fff5f5; padding: 20px; border-radius: 15px; margin: 20px 0;
-            border: 2px dashed var(--primary-red);
-        }
-        .full-copy-box p { margin: 5px 0; font-weight: bold; font-family: monospace; font-size: 16px; color: #333; }
-
-        .btn-copy-all { background: #2d5d4b; color: white; margin-top: 10px; font-size: 14px; }
-        .btn-copy-all:hover { background: #1e3f33; }
-
-        .btn-close { background: #777; color: white; margin-top: 15px; font-size: 12px; padding: 10px; }
-
-        .user-details { display: none; border-top: 2px dashed #eee; margin-top: 25px; padding-top: 25px; }
-        .balance-box { background: #fff8f8; padding: 20px; border-radius: 18px; border: 1px solid #ffdde0; margin-bottom: 15px; }
-        .balance-actions { display: flex; gap: 10px; margin-top: 12px; }
-        .btn-action { padding: 10px; color: white; font-size: 12px; border-radius: 10px; flex: 1; }
-        .btn-plus { background: #2e7d32; } .btn-minus { background: #c62828; }
-
-        .footer-rights { margin-top: 30px; font-size: 12px; color: #999; text-align: center; width: 100%; border-top: 1px solid #eee; padding-top: 20px; }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-    <div class="page-title">Sajobok</div>
-    <div class="page-subtitle">الإدارة الاحترافية | عباس الدولي</div>
+<header>
+    <div class="logo"><i class="fas fa-shield-alt"></i> SAJOBOK ADMIN</div>
+    <div style="font-size: 14px;"><i class="fas fa-circle" style="color: #00ff00; font-size: 10px;"></i> النظام يعمل</div>
+</header>
 
-    <div class="admin-card">
-        <div class="header"><h2><i class="fas fa-edit"></i> تعديل بيانات حساب</h2></div>
-        <div class="content">
-            <div class="input-wrapper">
-                <i class="fas fa-search input-icon"></i>
-                <input type="text" id="accId" placeholder="رقم الحساب (7 أرقام)">
-            </div>
-            <button class="btn-search" onclick="fetchUser()">جلب البيانات</button>
+<div class="container">
 
-            <div id="userDetails" class="user-details">
-                <label>رقم الحساب:</label>
-                <input type="text" id="userAccNum" readonly>
-                <label>الاسم (English):</label>
-                <input type="text" id="userName">
-                <div class="balance-box">
-                    <label>الرصيد:</label>
-                    <input type="number" id="userBalance" step="0.01">
-                    <div class="balance-actions">
-                        <button class="btn-action btn-plus" onclick="mathBalance(true)">+ زيادة</button>
-                        <button class="btn-action btn-minus" onclick="mathBalance(false)">- خصم</button>
-                    </div>
-                </div>
-                <label>كلمة المرور:</label>
-                <input type="text" id="userPass">
-                <button class="btn-update" onclick="updateToFirebase()">حفظ التعديلات</button>
-            </div>
+    <div class="card">
+        <h2><i class="fas fa-user-plus"></i> إضافة مستخدم جديد</h2>
+        <button class="btn btn-outline" onclick="generateAccountNumber()">
+            <i class="fas fa-magic"></i> توليد رقم حساب عشوائي
+        </button>
+        <div class="input-group">
+            <i class="fas fa-fingerprint"></i>
+            <input type="text" id="newAccId" placeholder="رقم الحساب سيظهر هنا" readonly>
         </div>
+        <div class="input-group">
+            <i class="fas fa-user-tag"></i>
+            <input type="text" id="newUserName" placeholder="اسم المستخدم الكامل (English)">
+        </div>
+        <div class="input-group">
+            <i class="fas fa-money-bill-wave"></i>
+            <input type="number" id="newUserBalance" placeholder="الرصيد الافتتاحي">
+        </div>
+        <div class="input-group">
+            <i class="fas fa-key"></i>
+            <input type="text" id="newUserPass" placeholder="تعيين كلمة المرور">
+        </div>
+        <button class="btn btn-red" onclick="addNewUser()">
+            <i class="fas fa-cloud-upload-alt"></i> حفظ في القاعدة
+        </button>
     </div>
 
-    <div class="admin-card">
-        <div class="header"><h2><i class="fas fa-user-plus"></i> إنشاء مستخدم جديد</h2></div>
-        <div class="content">
-            <button class="btn-generate" onclick="generateAccountNumber()"><i class="fas fa-random"></i> توليد رقم حساب آلي</button>
-            <label>رقم الحساب المولد:</label>
-            <input type="text" id="newAccId" readonly placeholder="اضغط الزر بالأعلى">
-            <label>الاسم (English):</label>
-            <input type="text" id="newUserName" placeholder="Full Name">
-            <label>كلمة المرور:</label>
-            <input type="text" id="newUserPass" placeholder="Password">
-            <label>الرصيد:</label>
-            <input type="number" id="newUserBalance" value="0">
-            <button class="btn-add-new" onclick="addNewUser()">تأكيد وإنشاء الحساب</button>
+    <div class="card">
+        <h2><i class="fas fa-search-dollar"></i> إدارة الحسابات</h2>
+        <div class="input-group">
+            <i class="fas fa-search"></i>
+            <input type="text" id="accId" placeholder="بحث برقم الحساب (7 أرقام)">
         </div>
-    </div>
+        <button class="btn btn-red" onclick="fetchUser()" style="background-color: #333;">
+            <i class="fas fa-user-search"></i> بحث عن المستخدم
+        </button>
 
-    <div class="modal-overlay" id="successModal">
-        <div class="modal-content">
-            <i class="fas fa-check-circle" style="font-size: 50px; color: #2e7d32; margin-bottom: 15px;"></i>
-            <h3>تم الإنشاء بنجاح!</h3>
-            <p style="font-size: 13px; color: #666;">اضغط على الزر أدناه لنسخ كافة البيانات</p>
+        <div id="userDetails" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
+            <input type="hidden" id="userAccNum">
+            <label style="font-size: 13px; color: #888;">الاسم:</label>
+            <div class="input-group"><i class="fas fa-signature"></i><input type="text" id="userName"></div>
             
-            <div class="full-copy-box" id="fullDataBox">
-                <p>Account: <span id="resAcc">0000000</span></p>
-                <p>Password: <span id="resPass">****</span></p>
+            <label style="font-size: 13px; color: #888;">الرصيد الحالي:</label>
+            <div class="input-group"><i class="fas fa-coins"></i><input type="number" id="userBalance" step="0.01"></div>
+            <div class="math-box">
+                <button class="btn-mini" onclick="mathBalance(true)" style="color: green;">+ إضافة مبلغ</button>
+                <button class="btn-mini" onclick="mathBalance(false)" style="color: red;">- خصم مبلغ</button>
             </div>
 
-            <button class="btn-copy-all" onclick="copyAllData()"><i class="fas fa-copy"></i> نسخ رقم الحساب والباسورد</button>
-            <button class="btn-close" onclick="closeModal()">إغلاق</button>
+            <br>
+            <label style="font-size: 13px; color: #888;">كلمة المرور:</label>
+            <div class="input-group"><i class="fas fa-unlock-alt"></i><input type="text" id="userPass"></div>
+            
+            <button class="btn btn-red" onclick="updateToFirebase()">
+                <i class="fas fa-sync-alt"></i> تحديث وحفظ التعديلات
+            </button>
         </div>
     </div>
+</div>
 
-    <div class="footer-rights">
-        تم التصميم والبرمجة بواسطة <span style="color:var(--primary-red); font-weight:bold;">عباس الدولي</span> &copy; 2026
+<div id="successModal" class="modal">
+    <div class="modal-content">
+        <i class="fas fa-check-circle" style="font-size: 70px; color: #27ae60; margin-bottom: 15px;"></i>
+        <h3 style="margin: 0; color: #27ae60;">تم الحفظ بنجاح</h3>
+        <p style="color: #666;">بيانات الدخول الخاصة بالمستخدم:</p>
+        <div class="copy-area">
+            الحساب: <span id="resAcc"></span><br>
+            كلمة السر: <span id="resPass"></span>
+        </div>
+        <button class="btn btn-red" onclick="copyAllData()">
+            <i class="fas fa-copy"></i> نسخ البيانات معاً
+        </button>
+        <button onclick="closeModal()" style="margin-top: 15px; border: none; background: none; color: #aaa; cursor: pointer;">إغلاق النافذة</button>
     </div>
+</div>
 
 <script>
+    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCWDfYZSHHu6E-XRzZ1THpeMdSfxECRAl0",
         databaseURL: "https://sajobok-default-rtdb.firebaseio.com/",
@@ -177,9 +201,8 @@
     const database = firebase.database();
 
     function generateAccountNumber() {
-        const first = Math.floor(Math.random() * 9) + 1;
-        const rest = Math.floor(Math.random() * 900000) + 100000;
-        document.getElementById('newAccId').value = first.toString() + rest.toString();
+        const randomAcc = Math.floor(1000000 + Math.random() * 9000000);
+        document.getElementById('newAccId').value = randomAcc;
     }
 
     function addNewUser() {
@@ -188,7 +211,7 @@
         const balance = document.getElementById('newUserBalance').value;
         const pass = document.getElementById('newUserPass').value;
 
-        if (!id || !name || !pass) return alert("أكمل البيانات أولاً");
+        if (!id || !name || !pass) return alert("الرجاء ملء الحقول وتوليد الرقم");
 
         database.ref('users/' + id).set({
             full_name: name,
@@ -202,15 +225,11 @@
         });
     }
 
-    // دالة النسخ الموحد (نسخة واحدة)
     function copyAllData() {
         const acc = document.getElementById('resAcc').innerText;
         const pass = document.getElementById('resPass').innerText;
         const textToCopy = "Account: " + acc + " | Pass: " + pass;
-        
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            alert("تم نسخ البيانات بنجاح:\n" + textToCopy);
-        });
+        navigator.clipboard.writeText(textToCopy).then(() => { alert("تم نسخ البيانات!"); });
     }
 
     function closeModal() {
@@ -220,7 +239,7 @@
 
     function fetchUser() {
         const id = document.getElementById('accId').value;
-        if (!id) return alert("أدخل الرقم");
+        if (!id) return alert("أدخل رقم الحساب");
         database.ref('users/' + id).once('value').then((snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
@@ -229,15 +248,15 @@
                 document.getElementById('userName').value = data.full_name || "";
                 document.getElementById('userBalance').value = data.balance || 0;
                 document.getElementById('userPass').value = data.password || "";
-            } else { alert("الحساب غير موجود"); }
+            } else { alert("عذراً، هذا المستخدم غير موجود"); }
         });
     }
 
     function mathBalance(isAdd) {
         const input = document.getElementById('userBalance');
-        const amount = prompt("المبلغ:");
+        const amount = prompt("أدخل المبلغ:");
         if (amount && !isNaN(amount)) {
-            const current = parseFloat(input.value);
+            const current = parseFloat(input.value) || 0;
             input.value = isAdd ? (current + parseFloat(amount)).toFixed(2) : (current - parseFloat(amount)).toFixed(2);
         }
     }
@@ -248,8 +267,9 @@
             full_name: document.getElementById('userName').value,
             balance: parseFloat(document.getElementById('userBalance').value),
             password: document.getElementById('userPass').value
-        }).then(() => alert("تم تحديث البيانات!"));
+        }).then(() => alert("تم تحديث البيانات بنجاح"));
     }
 </script>
+
 </body>
 </html>
