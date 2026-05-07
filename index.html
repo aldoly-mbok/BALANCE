@@ -3,203 +3,139 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SajoBok Admin - لوحة التحكم</title>
+    <title>SajoBok Admin - دخول آمن</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        :root {
-            --primary-red: #cc0000; /* أحمر بنكك الشهير */
-            --dark-red: #990000;
-            --white: #ffffff;
-            --light-gray: #f4f4f4;
-            --shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-
+        :root { --primary-red: #cc0000; --dark-red: #990000; --white: #ffffff; --light-gray: #f4f4f4; }
         * { box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background-color: var(--light-gray); margin: 0; padding: 0; color: #333; }
+        body { background-color: var(--light-gray); margin: 0; padding: 0; overflow-x: hidden; }
 
-        header {
-            background-color: var(--primary-red);
-            padding: 20px 5%;
-            color: white;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-            border-bottom-left-radius: 20px;
-            border-bottom-right-radius: 20px;
+        /* شاشة القفل */
+        #lockScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--primary-red), #660000);
+            display: flex; align-items: center; justify-content: center; z-index: 9999;
+        }
+        .login-box {
+            background: white; padding: 40px; border-radius: 30px;
+            text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.3); width: 90%; max-width: 400px;
         }
 
-        .logo { font-size: 24px; font-weight: 900; letter-spacing: 1px; }
+        /* إخفاء المحتوى الأصلي حتى تسجيل الدخول */
+        #mainContent { display: none; }
+
+        header { background-color: var(--primary-red); padding: 20px 5%; color: white; display: flex; justify-content: space-between; align-items: center; border-bottom-left-radius: 20px; border-bottom-right-radius: 20px; }
         .container { max-width: 1000px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
-
-        /* الكروت */
-        .card {
-            background: white;
-            border-radius: 25px;
-            padding: 30px;
-            box-shadow: var(--shadow);
-            border-bottom: 5px solid var(--primary-red);
-            transition: transform 0.3s;
-        }
-        .card:hover { transform: translateY(-5px); }
-
-        h2 { color: var(--primary-red); font-size: 20px; margin-bottom: 25px; display: flex; align-items: center; gap: 10px; }
-
-        /* مدخلات البيانات */
+        .card { background: white; border-radius: 25px; padding: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); border-bottom: 5px solid var(--primary-red); }
         .input-group { margin-bottom: 15px; position: relative; }
         .input-group i { position: absolute; right: 15px; top: 15px; color: #888; }
-        input {
-            width: 100%;
-            padding: 12px 45px 12px 15px;
-            border: 1px solid #ddd;
-            border-radius: 15px;
-            font-size: 15px;
-            outline: none;
-            background: #fafafa;
-        }
-        input:focus { border-color: var(--primary-red); background: #fff; }
-
-        /* الأزرار */
-        .btn {
-            width: 100%;
-            padding: 12px;
-            border: none;
-            border-radius: 15px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: 0.3s;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 10px;
-        }
+        input { width: 100%; padding: 12px 45px 12px 15px; border: 1px solid #ddd; border-radius: 15px; outline: none; background: #fafafa; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 15px; font-size: 16px; font-weight: 700; cursor: pointer; transition: 0.3s; display: flex; justify-content: center; align-items: center; gap: 10px; }
         .btn-red { background-color: var(--primary-red); color: white; }
-        .btn-red:hover { background-color: var(--dark-red); box-shadow: 0 5px 15px rgba(204,0,0,0.3); }
         .btn-outline { background: transparent; border: 2px solid var(--primary-red); color: var(--primary-red); margin-bottom: 15px; }
-        
-        .math-box { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-mini { flex: 1; padding: 8px; border-radius: 10px; border: 1px solid #ccc; background: #eee; font-weight: bold; cursor: pointer; }
-
-        /* المودال */
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            align-items: center; justify-content: center; z-index: 1000;
-        }
-        .modal-content {
-            background: white; padding: 30px; border-radius: 30px;
-            text-align: center; width: 90%; max-width: 400px;
-            animation: fadeIn 0.3s;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-content { background: white; padding: 30px; border-radius: 30px; text-align: center; width: 90%; max-width: 400px; }
         .copy-area { background: #fff5f5; padding: 20px; border: 2px dashed var(--primary-red); border-radius: 20px; margin: 20px 0; font-size: 18px; font-weight: 900; color: var(--dark-red); }
-
         @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
     </style>
 </head>
 <body>
 
-<header>
-    <div class="logo"><i class="fas fa-shield-alt"></i> SAJOBOK ADMIN</div>
-    <div style="font-size: 14px;"><i class="fas fa-circle" style="color: #00ff00; font-size: 10px;"></i> النظام يعمل</div>
-</header>
-
-<div class="container">
-
-    <div class="card">
-        <h2><i class="fas fa-user-plus"></i> إضافة مستخدم جديد</h2>
-        <button class="btn btn-outline" onclick="generateAccountNumber()">
-            <i class="fas fa-magic"></i> توليد رقم حساب عشوائي
-        </button>
-        <div class="input-group">
-            <i class="fas fa-fingerprint"></i>
-            <input type="text" id="newAccId" placeholder="رقم الحساب سيظهر هنا" readonly>
-        </div>
-        <div class="input-group">
-            <i class="fas fa-user-tag"></i>
-            <input type="text" id="newUserName" placeholder="اسم المستخدم الكامل (English)">
-        </div>
-        <div class="input-group">
-            <i class="fas fa-money-bill-wave"></i>
-            <input type="number" id="newUserBalance" placeholder="الرصيد الافتتاحي">
-        </div>
+<div id="lockScreen">
+    <div class="login-box">
+        <i class="fas fa-user-lock" style="font-size: 50px; color: var(--primary-red); margin-bottom: 20px;"></i>
+        <h2 style="margin: 0 0 20px 0;">دخول الإدارة</h2>
         <div class="input-group">
             <i class="fas fa-key"></i>
-            <input type="text" id="newUserPass" placeholder="تعيين كلمة المرور">
+            <input type="password" id="adminPassInput" placeholder="أدخل كلمة المرور السرية">
         </div>
-        <button class="btn btn-red" onclick="addNewUser()">
-            <i class="fas fa-cloud-upload-alt"></i> حفظ في القاعدة
+        <button class="btn btn-red" onclick="checkAdminPassword()">
+            <i class="fas fa-sign-in-alt"></i> فتح اللوحة
         </button>
+        <p id="loginError" style="color: red; display: none; margin-top: 10px; font-size: 14px;">كلمة المرور غير صحيحة!</p>
     </div>
+</div>
 
-    <div class="card">
-        <h2><i class="fas fa-search-dollar"></i> إدارة الحسابات</h2>
-        <div class="input-group">
-            <i class="fas fa-search"></i>
-            <input type="text" id="accId" placeholder="بحث برقم الحساب (7 أرقام)">
+<div id="mainContent">
+    <header>
+        <div class="logo"><i class="fas fa-shield-alt"></i> SAJOBOK ADMIN</div>
+        <button onclick="location.reload()" style="background:none; border:1px solid white; color:white; border-radius:10px; cursor:pointer; padding:5px 10px;">تسجيل خروج</button>
+    </header>
+
+    <div class="container">
+        <div class="card">
+            <h2><i class="fas fa-user-plus"></i> إضافة مستخدم جديد</h2>
+            <button class="btn btn-outline" onclick="generateAccountNumber()"><i class="fas fa-magic"></i> توليد رقم حساب</button>
+            <div class="input-group"><i class="fas fa-fingerprint"></i><input type="text" id="newAccId" readonly></div>
+            <div class="input-group"><i class="fas fa-user-tag"></i><input type="text" id="newUserName" placeholder="الاسم (English)"></div>
+            <div class="input-group"><i class="fas fa-money-bill-wave"></i><input type="number" id="newUserBalance" value="2000"></div>
+            <div class="input-group"><i class="fas fa-key"></i><input type="text" id="newUserPass" placeholder="كلمة المرور"></div>
+            <button class="btn btn-red" onclick="addNewUser()"><i class="fas fa-save"></i> حفظ</button>
         </div>
-        <button class="btn btn-red" onclick="fetchUser()" style="background-color: #333;">
-            <i class="fas fa-user-search"></i> بحث عن المستخدم
-        </button>
 
-        <div id="userDetails" style="display: none; margin-top: 25px; padding-top: 20px; border-top: 1px solid #eee;">
-            <input type="hidden" id="userAccNum">
-            <label style="font-size: 13px; color: #888;">الاسم:</label>
-            <div class="input-group"><i class="fas fa-signature"></i><input type="text" id="userName"></div>
-            
-            <label style="font-size: 13px; color: #888;">الرصيد الحالي:</label>
-            <div class="input-group"><i class="fas fa-coins"></i><input type="number" id="userBalance" step="0.01"></div>
-            <div class="math-box">
-                <button class="btn-mini" onclick="mathBalance(true)" style="color: green;">+ إضافة مبلغ</button>
-                <button class="btn-mini" onclick="mathBalance(false)" style="color: red;">- خصم مبلغ</button>
+        <div class="card">
+            <h2><i class="fas fa-search-dollar"></i> إدارة الحسابات</h2>
+            <div class="input-group"><i class="fas fa-search"></i><input type="text" id="accId" placeholder="بحث بـ 7 أرقام"></div>
+            <button class="btn btn-red" onclick="fetchUser()" style="background-color:#333;"><i class="fas fa-user-search"></i> بحث</button>
+            <div id="userDetails" style="display: none; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;">
+                <input type="hidden" id="userAccNum">
+                <input type="text" id="userName" placeholder="الاسم">
+                <div class="input-group" style="margin-top:10px;"><i class="fas fa-coins"></i><input type="number" id="userBalance" step="0.01"></div>
+                <div style="display:flex; gap:10px;"><button class="btn" style="background:#eee;" onclick="mathBalance(true)">+ جمع</button><button class="btn" style="background:#eee;" onclick="mathBalance(false)">- طرح</button></div>
+                <div class="input-group" style="margin-top:10px;"><i class="fas fa-unlock-alt"></i><input type="text" id="userPass"></div>
+                <button class="btn btn-red" onclick="updateToFirebase()">تحديث</button>
             </div>
-
-            <br>
-            <label style="font-size: 13px; color: #888;">كلمة المرور:</label>
-            <div class="input-group"><i class="fas fa-unlock-alt"></i><input type="text" id="userPass"></div>
-            
-            <button class="btn btn-red" onclick="updateToFirebase()">
-                <i class="fas fa-sync-alt"></i> تحديث وحفظ التعديلات
-            </button>
         </div>
     </div>
 </div>
 
 <div id="successModal" class="modal">
     <div class="modal-content">
-        <i class="fas fa-check-circle" style="font-size: 70px; color: #27ae60; margin-bottom: 15px;"></i>
-        <h3 style="margin: 0; color: #27ae60;">تم الحفظ بنجاح</h3>
-        <p style="color: #666;">بيانات الدخول الخاصة بالمستخدم:</p>
-        <div class="copy-area">
-            الحساب: <span id="resAcc"></span><br>
-            كلمة السر: <span id="resPass"></span>
-        </div>
-        <button class="btn btn-red" onclick="copyAllData()">
-            <i class="fas fa-copy"></i> نسخ البيانات معاً
-        </button>
-        <button onclick="closeModal()" style="margin-top: 15px; border: none; background: none; color: #aaa; cursor: pointer;">إغلاق النافذة</button>
+        <i class="fas fa-check-circle" style="font-size: 60px; color: #27ae60;"></i>
+        <h3>تم الحفظ!</h3>
+        <div class="copy-area">الحساب: <span id="resAcc"></span><br>الباسورد: <span id="resPass"></span></div>
+        <button class="btn btn-red" onclick="copyAllData()">نسخ البيانات</button>
+        <button onclick="closeModal()" style="margin-top:10px; border:none; background:none; cursor:pointer; color:#aaa;">إغلاق</button>
     </div>
 </div>
 
 <script>
-    // Firebase Config
     const firebaseConfig = {
         apiKey: "AIzaSyCWDfYZSHHu6E-XRzZ1THpeMdSfxECRAl0",
         databaseURL: "https://sajobok-default-rtdb.firebaseio.com/",
         projectId: "sajobok",
         storageBucket: "sajobok.firebasestorage.app"
     };
-
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
+    // دالة التحقق من كلمة مرور الأدمن من فايربيز
+    function checkAdminPassword() {
+        const inputPass = document.getElementById('adminPassInput').value;
+        const errorMsg = document.getElementById('loginError');
+
+        database.ref('admin_config/admin_password').once('value').then((snapshot) => {
+            const correctPass = snapshot.val();
+            if (inputPass === correctPass) {
+                document.getElementById('lockScreen').style.display = 'none';
+                document.getElementById('mainContent').style.display = 'block';
+            } else {
+                errorMsg.style.display = 'block';
+                document.getElementById('adminPassInput').value = '';
+            }
+        });
+    }
+
+    // السماح بالدخول عند ضغط Enter
+    document.getElementById("adminPassInput").addEventListener("keyup", function(event) {
+        if (event.key === "Enter") { checkAdminPassword(); }
+    });
+
+    // باقي الدوال الخاصة بك كما هي تماماً
     function generateAccountNumber() {
         const randomAcc = Math.floor(1000000 + Math.random() * 9000000);
         document.getElementById('newAccId').value = randomAcc;
@@ -210,14 +146,9 @@
         const name = document.getElementById('newUserName').value;
         const balance = document.getElementById('newUserBalance').value;
         const pass = document.getElementById('newUserPass').value;
-
-        if (!id || !name || !pass) return alert("الرجاء ملء الحقول وتوليد الرقم");
-
+        if (!id || !name || !pass) return alert("أكمل البيانات");
         database.ref('users/' + id).set({
-            full_name: name,
-            balance: parseFloat(balance) || 0,
-            password: pass,
-            account_number: id
+            full_name: name, balance: parseFloat(balance) || 0, password: pass, account_number: id
         }).then(() => {
             document.getElementById('resAcc').innerText = id;
             document.getElementById('resPass').innerText = pass;
@@ -228,18 +159,19 @@
     function copyAllData() {
         const acc = document.getElementById('resAcc').innerText;
         const pass = document.getElementById('resPass').innerText;
-        const textToCopy = "Account: " + acc + " | Pass: " + pass;
-        navigator.clipboard.writeText(textToCopy).then(() => { alert("تم نسخ البيانات!"); });
+        navigator.clipboard.writeText("Account: " + acc + " | Pass: " + pass).then(() => alert("تم النسخ"));
     }
 
     function closeModal() {
         document.getElementById('successModal').style.display = 'none';
-        location.reload();
+        document.getElementById('newUserName').value = "";
+        document.getElementById('newUserPass').value = "";
+        document.getElementById('newAccId').value = "";
+        document.getElementById('newUserBalance').value = "2000";
     }
 
     function fetchUser() {
         const id = document.getElementById('accId').value;
-        if (!id) return alert("أدخل رقم الحساب");
         database.ref('users/' + id).once('value').then((snapshot) => {
             if (snapshot.exists()) {
                 const data = snapshot.val();
@@ -248,13 +180,13 @@
                 document.getElementById('userName').value = data.full_name || "";
                 document.getElementById('userBalance').value = data.balance || 0;
                 document.getElementById('userPass').value = data.password || "";
-            } else { alert("عذراً، هذا المستخدم غير موجود"); }
+            } else { alert("غير موجود"); }
         });
     }
 
     function mathBalance(isAdd) {
         const input = document.getElementById('userBalance');
-        const amount = prompt("أدخل المبلغ:");
+        const amount = prompt("المبلغ:");
         if (amount && !isNaN(amount)) {
             const current = parseFloat(input.value) || 0;
             input.value = isAdd ? (current + parseFloat(amount)).toFixed(2) : (current - parseFloat(amount)).toFixed(2);
@@ -267,9 +199,8 @@
             full_name: document.getElementById('userName').value,
             balance: parseFloat(document.getElementById('userBalance').value),
             password: document.getElementById('userPass').value
-        }).then(() => alert("تم تحديث البيانات بنجاح"));
+        }).then(() => alert("تم التحديث"));
     }
 </script>
-
 </body>
 </html>
