@@ -113,7 +113,6 @@
     firebase.initializeApp(firebaseConfig);
     const database = firebase.database();
 
-    // دالة التحقق من كلمة مرور الأدمن من فايربيز
     function checkAdminPassword() {
         const inputPass = document.getElementById('adminPassInput').value;
         const errorMsg = document.getElementById('loginError');
@@ -130,12 +129,10 @@
         });
     }
 
-    // السماح بالدخول عند ضغط Enter
     document.getElementById("adminPassInput").addEventListener("keyup", function(event) {
         if (event.key === "Enter") { checkAdminPassword(); }
     });
 
-    // باقي الدوال الخاصة بك كما هي تماماً
     function generateAccountNumber() {
         const randomAcc = Math.floor(1000000 + Math.random() * 9000000);
         document.getElementById('newAccId').value = randomAcc;
@@ -147,8 +144,12 @@
         const balance = document.getElementById('newUserBalance').value;
         const pass = document.getElementById('newUserPass').value;
         if (!id || !name || !pass) return alert("أكمل البيانات");
+        
+        // التعديل هنا: حذف خانة account_number من الداخل لتجنب التكرار
         database.ref('users/' + id).set({
-            full_name: name, balance: parseFloat(balance) || 0, password: pass, account_number: id
+            full_name: name, 
+            balance: parseFloat(balance) || 0, 
+            password: pass
         }).then(() => {
             document.getElementById('resAcc').innerText = id;
             document.getElementById('resPass').innerText = pass;
